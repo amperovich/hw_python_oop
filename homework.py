@@ -1,5 +1,13 @@
 from dataclasses import dataclass
-from typing import List
+from enum import Enum
+from typing import Sequence, Union
+
+
+class IncorrectInputDataError(Exception):
+    """
+    Сообщает нам о некорректных данных в пакете: код тренировки не входит
+    в словарь, либо неверное число аргументов в листе.
+    """
 
 
 @dataclass
@@ -63,18 +71,8 @@ class Training:
 
 
 class Running(Training):
-
     CALORIES_MEAN_SPEED_MULTIPLIER = 18
     CALORIES_MEAN_SPEED_SHIFT = 1.79
-
-    def __init__(self, action: int, duration: float, weight: float) -> None:
-        super().__init__(action, duration, weight)
-
-    def get_distance(self) -> float:
-        return super().get_distance()
-
-    def get_mean_speed(self) -> float:
-        return super().get_mean_speed()
 
     def get_spent_calories(self) -> float:
         return (
@@ -90,10 +88,9 @@ class Running(Training):
 
 
 class SportsWalking(Training):
-
     CALORIES_WEIGHT_MULTIPLIER = 0.035
     CALORIES_SPEED_HEIGHT_MULTIPLIER = 0.029
-    KMH_IN_MSEC = 0.278  # 1000 / (60 * 60)
+    KMH_IN_MSEC = 0.278  # Training.M_IN_KM / (Training.MIN_IN_H * 60)
     CM_IN_M = 100
 
     def __init__(
@@ -105,12 +102,6 @@ class SportsWalking(Training):
     ) -> None:
         super().__init__(action, duration, weight)
         self.height = height
-
-    def get_distance(self) -> float:
-        return super().get_distance()
-
-    def get_mean_speed(self) -> float:
-        return super().get_mean_speed()
 
     def get_spent_calories(self) -> float:
         return (
@@ -129,7 +120,6 @@ class SportsWalking(Training):
 
 
 class Swimming(Training):
-
     MEAN_SPEED_SHIFT = 1.1
     WEIGHT_MULTIPLIER = 2
     LEN_STEP = 1.38
@@ -146,9 +136,6 @@ class Swimming(Training):
         self.length_pool = length_pool
         self.count_pool = count_pool
 
-    def get_distance(self) -> float:
-        return super().get_distance()
-
     def get_mean_speed(self) -> float:
         return (
             self.length_pool * self.count_pool / self.M_IN_KM / self.duration
@@ -163,24 +150,19 @@ class Swimming(Training):
         )
 
 
-WORKOUT_TYPES = {
-    'RUN': Running,
-    'WLK': SportsWalking,
-    'SWM': Swimming,
-}
+class WorkoutTypes(Enum):
+    RUN = Running
+    WLK = SportsWalking
+    SWM = Swimming
 
 
-def read_package(workout_type: str, data: List) -> Training:
+def read_package(
+    workout_type: str, data: Sequence[Union[int, float]],
+) -> Training:
     try:
-        return WORKOUT_TYPES[workout_type](*data)
-    except KeyError:
-        raise ValueError('Некорректный код наименования тренировки.')
-    except TypeError:
-        raise ValueError(
-            'Некорректные данные в пакете, '
-            'либо '
-            'некорректное число элементов в данном пакете.'
-        )
+        return getattr(WorkoutTypes, workout_type).value(*data)
+    except (KeyError, TypeError) as err:
+        raise IncorrectInputDataError(f'Некорректные данные в пакете: {err}')
 
 
 def main(training: Training) -> None:
