@@ -21,6 +21,7 @@ class InfoMessage:
         distance (float): расстояние, пройденное в течении тренировки (км);
         speed (float): средняя скорость тренирующегося (км/ч);
         calories (float): энергия, затраченная тренирующимся (ккал).
+
     """
 
     training_type: str
