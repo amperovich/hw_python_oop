@@ -128,9 +128,6 @@ dmypy.json
 # flake8
 .flake8
 
-# darglint
-.darglint
-
 # Pyre type checker
 .pyre/
 
